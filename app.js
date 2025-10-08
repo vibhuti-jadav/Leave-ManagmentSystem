@@ -5,8 +5,13 @@ dotenv.config({path:"./env/.env"})
 import express from "express";
 import connectDB from "./config/db.js";
 import httpError from "./middleware/errorHandler.js";
+import userRouter from "./routers/userRouters.js"
 
 const app = express()
+
+app.use(express.json())
+
+app.use("/user",userRouter)
 
 app.get("/",(req,res)=>{
     res.status(200).json("hello from server")
@@ -23,6 +28,8 @@ app.use((error,req,res,next)=>{
     res.status(error.statusCode || 500).json(error.message || "somthing went wrong")
 
 });
+
+
 
 
 const port = process.env.PORT || 5000;
