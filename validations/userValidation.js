@@ -25,7 +25,13 @@ const registerUser = Joi.object({
     }),
 });
 
-export default registerUser
+
+const updateUser = registerUser.fork(
+    Object.keys(registerUser.describe().keys),
+    (schema)=>schema.optional()
+);
+
+export default {registerUser , updateUser}
 
 
 

@@ -1,18 +1,18 @@
 
 import httpError from "../middleware/errorHandler.js";
 import User from "../model/User.js";
-import registerUser from "../validations/userValidation.js";
+// import registerUser from "../validations/userValidation.js";
 
 const addUser = async (req,res,next)=>{
     try {
-        const {error , value} = registerUser.validate(req.body);
+      //   const {error , value} = registerUser.validate(req.body);
 
-        if(error){
-            return res.status(400).json(error.message);
-        }
-      req.body = value;
+      //   if(error){
+      //       return res.status(400).json(error.message);
+      //   }
+      // req.body = value;
 
-      const {name , email,password,role,department}=value;
+      const {name , email,password,role,department}=req.body;
 
       let existingUser  = await User.findOne({email});
 
