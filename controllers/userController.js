@@ -38,6 +38,50 @@ const addUser = async (req,res,next)=>{
     } catch (error) {
         return next(new httpError(error.message,500))
     }
+};
+
+const login = async (req,res,next)=>{
+  try {
+    const {email , password}= req.body;
+
+    const user = await User.findByCredentials(email,password);
+
+    if(!user){
+      next(new httpError("unable to login",400))
+    }
+
+    return res.status(200).json({message:"user logged in ",user})
+
+  } catch (error) {
+    return next(new httpError(error.message,500))
+  }
 }
 
-export default {addUser}
+const update = async (req,res,next)=>{
+  try {
+    const updates = Object.keys(req.body);
+
+    const allowUpdates = ["name","email","password"];
+
+    const isAllowedUpdates = updates.every((fields)=>allowUpdates.includes(fields))
+
+    if(!isAllowedUpdates){
+      return next(new httpError("only allowed field can be update",400))
+    }
+
+      const user = req.user.id;
+
+      const {email}=req.body
+      if(email){
+        const existingUser = await User.findOne({email})
+
+        if(existingUser &(existingUser._id.toString()!=user))
+          return next(new httpError("user already exists",400))
+      }
+  } catch (error) {
+    
+  }
+}
+
+
+export default {addUser ,login }
