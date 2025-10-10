@@ -83,5 +83,4 @@ const update = async (req,res,next)=>{
   }
 }
 
-
 export default {addUser ,login }
