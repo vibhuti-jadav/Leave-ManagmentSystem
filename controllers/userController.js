@@ -50,7 +50,9 @@ const login = async (req,res,next)=>{
       next(new httpError("unable to login",400))
     }
 
-    return res.status(200).json({message:"user logged in ",user})
+    const token = await user.generateAuthToken()
+
+    return res.status(200).json({message:"user logged in ",user,token})
 
   } catch (error) {
     return next(new httpError(error.message,500))
@@ -69,18 +71,34 @@ const update = async (req,res,next)=>{
       return next(new httpError("only allowed field can be update",400))
     }
 
-      const user = req.user.id;
+      const userId = req.user.id;
 
-      const {email}=req.body
+      const user = await User.findById(userId);
+
+      if(!user){
+        return next(new  httpError("user not found",404))
+      }
+      
+      const {email}=req.body;
+
       if(email){
         const existingUser = await User.findOne({email})
 
-        if(existingUser &(existingUser._id.toString()!=user))
+        if(existingUser &(existingUser._id.toString()!=user._id.toString()))
           return next(new httpError("user already exists",400))
       }
+
+      updates.forEach((field)=>{
+        user[field]=req.body[field]
+      })
+
+      await user.save()
+
+      res.status(200).json({message:"user data updated successfully",user})
+
   } catch (error) {
-    
+     return next(new httpError(error.message,500))    
   }
 }
 
-export default {addUser ,login }
+export default {addUser ,login,update }
