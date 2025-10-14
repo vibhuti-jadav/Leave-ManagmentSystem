@@ -101,4 +101,66 @@ const update = async (req,res,next)=>{
   }
 }
 
-export default {addUser ,login,update }
+const deleteUser = async (req,res,next)=>{
+  try {
+    
+    const user = await User.findByIdAndDelete(req.user.id);
+
+    if(!user){
+      next(new httpError("failed to delete user",500))
+    }
+    res.status(200).json({message:"user account deleted successfully"})
+
+  } catch (error) {
+    return next(new httpError(error.message,500))
+  }
+}
+
+
+const authLogin = async (req,res,next)=>{
+  try {
+    const user = req.user;
+
+    res.status(200).json({user})
+  } catch (error) {
+    return next(new httpError(error.message,500))
+  }
+
+};
+
+
+const logOut = async(req,res,next)=>{
+  try {
+    const user = req.user;
+
+    const token = req.token;
+
+    user.tokens = user.tokens.filter((t)=>{
+      return t.token !== token
+    })
+
+    await user.save();
+
+    res.status(200).json({mesage:"user log-out successfullyy"})
+
+  } catch (error) {
+    next(new httpError(error.message,500))
+  }
+};
+
+const logOutAll = async(req,res,next)=>{
+  try {
+    const user = req.user;
+    user.tokens = []
+
+    await user.save()
+
+    res.status(200).json({message:"user log our from all session"})
+  } catch (error) {
+    next(new httpError(error.message,500))
+  }
+}
+
+
+
+export default {addUser ,login,update,deleteUser,authLogin,logOut,logOutAll }

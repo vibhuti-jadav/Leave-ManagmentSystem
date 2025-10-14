@@ -5,13 +5,15 @@ dotenv.config({path:"./env/.env"})
 import express from "express";
 import connectDB from "./config/db.js";
 import httpError from "./middleware/errorHandler.js";
-import userRouter from "./routers/userRouters.js"
+import userRouter from "./routers/userRouters.js";
+import leaveRouter from "./routers/leaveRouter.js"
 
 const app = express()
 
 app.use(express.json())
 
 app.use("/user",userRouter)
+app.use("/leave",leaveRouter)
 
 app.get("/",(req,res)=>{
     res.status(200).json("hello from server")

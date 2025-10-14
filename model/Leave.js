@@ -7,6 +7,9 @@ const LeaveSchema = new mongoose.Schema({
         ref:"User",
         required:true,
     },
+    employeeName:{
+        type:String
+    },
     startDate:{
         type:Date,
         required:true,
@@ -28,13 +31,13 @@ const LeaveSchema = new mongoose.Schema({
     },
     status:{
         type:String,
-        enum:["pemding","approved","reject"],
+        enum:["pending","approved","reject"],
         default:"pending",
     },
     approvedBy:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"User",
-        required:true,
+        // required:true,
     },
     rejectMessage:{
         type:String,
@@ -44,5 +47,7 @@ const LeaveSchema = new mongoose.Schema({
     
 })
 
+const Leave = mongoose.model("Leaves",LeaveSchema)
 
-export default LeaveSchema;
+
+export default Leave;
