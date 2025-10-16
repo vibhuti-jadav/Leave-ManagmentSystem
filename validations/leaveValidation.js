@@ -5,7 +5,7 @@ const leaveValidation = Joi.object({
         "date.base":"startDate must be valid date",
         "date.greater":"start dte must be future date",
     }),
-    endDate: Joi.date().greater(ref("startDate")).required().messages({
+    endDate: Joi.date().greater(Joi.ref("startDate")).required().messages({
             "date.base":"end date must be valid date ",
             "date.greate":"end date must be after start date"
     }),
@@ -21,7 +21,22 @@ const leaveValidation = Joi.object({
 
 })
 
-export default leaveValidation
+const updateLeave = Joi.object({
+  status: Joi.string().valid("approved", "rejected").required().messages({
+    "string.empty": "status required",
+    "any.only": "status can be only approved or rejected",
+  }),
+  rejectMessage: Joi.string().when("status", {
+    is: "rejected",
+    then: Joi.required().messages({
+      "any.required": "rejectMessage is required when status is rejected",
+      "string.empty": "rejectMessage cannot be empty",
+    }),
+    otherwise: Joi.optional(),
+  }),
+});
+
+export default {leaveValidation ,updateLeave}
 
 
    

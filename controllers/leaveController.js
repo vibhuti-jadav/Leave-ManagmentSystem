@@ -74,4 +74,78 @@ const getTeamLeaves = async(req,res,next)=>{
     }
 }
 
-export default {applyLeave ,getMyLeaves,getTeamLeaves}
+const updateLeaves = async(req,res,next)=>{
+    try {
+        const {status , rejectMessage} = req.body;
+
+        const id = req.params.id;
+
+        const leave = await Leave.findById(id).populate(
+            "employeeId",
+            "department role"
+        );
+
+        if(!leave){
+            return next(new httpError("leave not found",404))
+        }
+
+        if(req.user.role === "manager"){
+            if(leave.employeeId.department !== req.user.department){
+                return next(
+                    new httpError("you are not auhtorize to update leave status",400)
+                )
+            }
+        }
+
+leave.status = status;
+
+leave.approvedBy= req.user.id;
+
+if(status === "rejected" && rejectMessage){
+    leave.rejectMessage = rejectMessage;
+}
+
+await leave.save();
+
+await leave.populate("approvedBy","name")
+
+res.status(200).json({message:"leave status updated",leave})
+
+    } catch (error) {
+        next(new httpError(error.message,500))
+    }
+}
+
+
+const leaveStats = async (req,res,next)=>{
+    try {
+        const totalLeaves = await Leave.countDocuments();
+
+        const pendingLeavesCount = await Leave.countDocuments({
+            status:"pending",
+        });
+        const ApprovedLeavesCount = await Leave.countDocuments({
+            status:"approved",
+        })
+        const rejectedLeaveCount = await Leave.countDocuments({
+            status:"rejected"
+        })
+        const leaveData = {
+            totalLeaves,
+            pendingLeavesCount,
+            ApprovedLeavesCount,
+            rejectedLeaveCount
+        };
+
+        if(!leaveData){
+            return next(new httpError("no leave data found"))
+        }
+
+        res.status(200).json({message:"leave stats retrived sucessfully",leaveData});
+
+    } catch (error) {
+        return next(new httpError(error.message,500))
+    }
+}
+
+export default {applyLeave ,getMyLeaves,getTeamLeaves,updateLeaves ,leaveStats}
