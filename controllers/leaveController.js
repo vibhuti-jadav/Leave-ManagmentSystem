@@ -1,6 +1,8 @@
 import Leave from "../model/Leave.js"
 import httpError from "../middleware/errorHandler.js"
 import User from "../model/User.js";
+import sendEmail from "../utils/email.js";
+import leaveAppliedEmail from "../templates/leaveApplied.js";
 
 const applyLeave = async(req,res,next)=>{
 
@@ -17,10 +19,29 @@ const applyLeave = async(req,res,next)=>{
             reason
         };
 
-        const newLeave = await new Leave(leave);
+        const newLeave = await new Leave(leave).populate("employeeId","email");
 
         await newLeave.save();
 
+        const user = await User.findById(req.user.id)
+
+        res.status(201).json({
+            message:"leave application applied successfully",
+            leave:newLeave
+        })
+
+        await sendEmail({
+      to: user.email,
+      subject: `leave applied, ${user.name}!`,
+      html: leaveAppliedEmail(
+        user.name,
+        leaveTypes,
+        startDate,
+        endDate,
+        reason
+      ),
+    });
+  
         res.status(201).json({message:"leave application applied sucessfully",leave:newLeave})
 
 

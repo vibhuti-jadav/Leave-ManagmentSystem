@@ -1,6 +1,9 @@
 
 import httpError from "../middleware/errorHandler.js";
 import User from "../model/User.js";
+import deleteUserEmail from "../templates/deleteAccount.js";
+import welcomeEmail from "../templates/welcome.js";
+import sendEmail from "../utils/email.js";
 // import registerUser from "../validations/userValidation.js";
 
 const addUser = async (req,res,next)=>{
@@ -33,6 +36,12 @@ const addUser = async (req,res,next)=>{
       await saveUser.save()
 
       res.status(201).json({message:"user create sucessfully",saveUser})
+
+      await sendEmail({
+        to:saveUser.email,
+        subject:`welcome to leave management system ${saveUser.name}!`,
+        html:welcomeEmail(saveUser.name)
+      })
 
 
     } catch (error) {
@@ -110,6 +119,12 @@ const deleteUser = async (req,res,next)=>{
       next(new httpError("failed to delete user",500))
     }
     res.status(200).json({message:"user account deleted successfully"})
+
+        await sendEmail({
+        to:user.email,
+        subject:`good by ${user.name}!`,
+        html:deleteUserEmail(user.name)
+      })
 
   } catch (error) {
     return next(new httpError(error.message,500))
