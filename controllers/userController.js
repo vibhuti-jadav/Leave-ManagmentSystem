@@ -1,4 +1,3 @@
-
 import httpError from "../middleware/errorHandler.js";
 import User from "../model/User.js";
 import deleteUserEmail from "../templates/deleteAccount.js";
@@ -6,176 +5,174 @@ import welcomeEmail from "../templates/welcome.js";
 import sendEmail from "../utils/email.js";
 // import registerUser from "../validations/userValidation.js";
 
-const addUser = async (req,res,next)=>{
-    try {
-      //   const {error , value} = registerUser.validate(req.body);
+const addUser = async (req, res, next) => {
+  try {
+    //   const {error , value} = registerUser.validate(req.body);
 
-      //   if(error){
-      //       return res.status(400).json(error.message);
-      //   }
-      // req.body = value;
+    //   if(error){
+    //       return res.status(400).json(error.message);
+    //   }
+    // req.body = value;
 
-      const {name , email,password,role,department}=req.body;
+    const { name, email, password, role, department } = req.body;
 
-      let existingUser  = await User.findOne({email});
+    let existingUser = await User.findOne({ email });
 
-      if(existingUser){
-        return next(new httpError("user already exist  with this id",400))
-      }
-
-      const newUser = {
-        name,
-        email,
-        password,
-        role,
-        department,
-      };
-
-      const saveUser = new User(newUser);
-
-      await saveUser.save()
-
-      res.status(201).json({message:"user create sucessfully",saveUser})
-
-      await sendEmail({
-        to:saveUser.email,
-        subject:`welcome to leave management system ${saveUser.name}!`,
-        html:welcomeEmail(saveUser.name)
-      })
-
-
-    } catch (error) {
-        return next(new httpError(error.message,500))
+    if (existingUser) {
+      return next(new httpError("user already exist  with this id", 400));
     }
+
+    const newUser = {
+      name,
+      email,
+      password,
+      role,
+      department,
+    };
+
+    const saveUser = new User(newUser);
+
+    await saveUser.save();
+
+    res.status(201).json({ message: "user create sucessfully", saveUser });
+
+    await sendEmail({
+      to: saveUser.email,
+      subject: `welcome to leave management system ${saveUser.name}!`,
+      html: welcomeEmail(saveUser.name),
+    });
+  } catch (error) {
+    return next(new httpError(error.message, 500));
+  }
 };
 
-const login = async (req,res,next)=>{
+const login = async (req, res, next) => {
   try {
-    const {email , password}= req.body;
+    const { email, password } = req.body;
 
-    const user = await User.findByCredentials(email,password);
+    const user = await User.findByCredentials(email, password);
 
-    if(!user){
-      next(new httpError("unable to login",400))
+    if (!user) {
+      next(new httpError("unable to login", 400));
     }
 
-    const token = await user.generateAuthToken()
+    const token = await user.generateAuthToken();
 
-    return res.status(200).json({message:"user logged in ",user,token})
-
+    return res.status(200).json({ message: "user logged in ", user, token });
   } catch (error) {
-    return next(new httpError(error.message,500))
+    return next(new httpError(error.message, 500));
   }
-}
+};
 
-const update = async (req,res,next)=>{
+const update = async (req, res, next) => {
   try {
     const updates = Object.keys(req.body);
 
-    const allowUpdates = ["name","email","password"];
+    const allowUpdates = ["name", "email", "password"];
 
-    const isAllowedUpdates = updates.every((fields)=>allowUpdates.includes(fields))
+    const isAllowedUpdates = updates.every((fields) =>
+      allowUpdates.includes(fields)
+    );
 
-    if(!isAllowedUpdates){
-      return next(new httpError("only allowed field can be update",400))
+    if (!isAllowedUpdates) {
+      return next(new httpError("only allowed field can be update", 400));
     }
 
-      const userId = req.user.id;
+    const userId = req.user.id;
 
-      const user = await User.findById(userId);
+    const user = await User.findById(userId);
 
-      if(!user){
-        return next(new  httpError("user not found",404))
-      }
-      
-      const {email}=req.body;
+    if (!user) {
+      return next(new httpError("user not found", 404));
+    }
 
-      if(email){
-        const existingUser = await User.findOne({email})
+    const { email } = req.body;
 
-        if(existingUser &(existingUser._id.toString()!=user._id.toString()))
-          return next(new httpError("user already exists",400))
-      }
+    if (email) {
+      const existingUser = await User.findOne({ email });
 
-      updates.forEach((field)=>{
-        user[field]=req.body[field]
-      })
+      if (existingUser & (existingUser._id.toString() != user._id.toString()))
+        return next(new httpError("user already exists", 400));
+    }
 
-      await user.save()
+    updates.forEach((field) => {
+      user[field] = req.body[field];
+    });
 
-      res.status(200).json({message:"user data updated successfully",user})
+    await user.save();
 
+    res.status(200).json({ message: "user data updated successfully", user });
   } catch (error) {
-     return next(new httpError(error.message,500))    
+    return next(new httpError(error.message, 500));
   }
-}
+};
 
-const deleteUser = async (req,res,next)=>{
+const deleteUser = async (req, res, next) => {
   try {
-    
     const user = await User.findByIdAndDelete(req.user.id);
 
-    if(!user){
-      next(new httpError("failed to delete user",500))
+    if (!user) {
+      next(new httpError("failed to delete user", 500));
     }
-    res.status(200).json({message:"user account deleted successfully"})
+    res.status(200).json({ message: "user account deleted successfully" });
 
-        await sendEmail({
-        to:user.email,
-        subject:`good by ${user.name}!`,
-        html:deleteUserEmail(user.name)
-      })
-
+    await sendEmail({
+      to: user.email,
+      subject: `good by ${user.name}!`,
+      html: deleteUserEmail(user.name),
+    });
   } catch (error) {
-    return next(new httpError(error.message,500))
+    return next(new httpError(error.message, 500));
   }
-}
+};
 
-
-const authLogin = async (req,res,next)=>{
+const authLogin = async (req, res, next) => {
   try {
     const user = req.user;
 
-    res.status(200).json({user})
+    res.status(200).json({ user });
   } catch (error) {
-    return next(new httpError(error.message,500))
+    return next(new httpError(error.message, 500));
   }
-
 };
 
-
-const logOut = async(req,res,next)=>{
+const logOut = async (req, res, next) => {
   try {
     const user = req.user;
 
     const token = req.token;
 
-    user.tokens = user.tokens.filter((t)=>{
-      return t.token !== token
-    })
+    user.tokens = user.tokens.filter((t) => {
+      return t.token !== token;
+    });
 
     await user.save();
 
-    res.status(200).json({mesage:"user log-out successfullyy"})
-
+    res.status(200).json({ mesage: "user log-out successfullyy" });
   } catch (error) {
-    next(new httpError(error.message,500))
+    next(new httpError(error.message, 500));
   }
 };
 
-const logOutAll = async(req,res,next)=>{
+const logOutAll = async (req, res, next) => {
   try {
     const user = req.user;
-    user.tokens = []
+    user.tokens = [];
 
-    await user.save()
+    await user.save();
 
-    res.status(200).json({message:"user log our from all session"})
+    res.status(200).json({ message: "user log our from all session" });
   } catch (error) {
-    next(new httpError(error.message,500))
+    next(new httpError(error.message, 500));
   }
-}
+};
 
-
-
-export default {addUser ,login,update,deleteUser,authLogin,logOut,logOutAll }
+export default {
+  addUser,
+  login,
+  update,
+  deleteUser,
+  authLogin,
+  logOut,
+  logOutAll,
+};
